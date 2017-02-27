@@ -7,13 +7,15 @@ MODE_CLIENT_API = "api::client"
 
 
 class BiomioMessagingAPI(BaseMessagingAPI):
-    def __init__(self, mode=MODE_CLIENT_API):
+    def __init__(self, app_type, app_id=None, os_id='', dev_id='', mode=MODE_CLIENT_API):
         BaseMessagingAPI.__init__(self)
         self._mode = mode
-        self._create_builder()
+        self._create_builder(app_type, app_id, os_id, dev_id)
 
-    def _create_builder(self):
-        header = {'protoVer': '1.0'}
+    def _create_builder(self, app_type, app_id, os_id, dev_id):
+        header = {'protoVer': '1.0', 'osId': os_id, 'devId': dev_id, 'appType': app_type}
+        if app_id:
+            header.update(appId=app_id)
         if self._mode == MODE_CLIENT_API:
             header.update({'oid': 'clientHeader', 'seq': 0})
         elif self._mode == MODE_SERVER_API:
@@ -119,6 +121,10 @@ class BiomioMessagingAPI(BaseMessagingAPI):
         if response and response.header.oid == 'serverHello':
             return True
         return False
+
+    def repeat(self):
+        self._send_message(message=self._last_send_message, websocket=self._get_curr_connection(),
+                           wait_for_response=False)
 
     def close(self):
         response = self.bye()

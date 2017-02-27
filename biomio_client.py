@@ -1,17 +1,16 @@
 from coreapi.biomio_messaging_api import BiomioMessagingAPI
 from threading import Timer
-
-
 CONNECT = "biomio::client::connect"
 DISCONNECT = "biomio::client::disconnect"
 RESOURCE_REQUEST = "biomio::client::resource_request"
 TRY_REQUEST = "biomio::client::try_request"
+REPEAT_REQUEST = "biomio::client::repeat_request"
 CLIENT_ERROR = "biomio::client::client_error"
-REQUEST_TYPE_LIST = [CONNECT, DISCONNECT, RESOURCE_REQUEST, TRY_REQUEST, CLIENT_ERROR]
+REQUEST_TYPE_LIST = [CONNECT, DISCONNECT, RESOURCE_REQUEST, TRY_REQUEST, REPEAT_REQUEST, CLIENT_ERROR]
 
 
 class BiomioClient(object):
-    def __init__(self, private_key, auto_receiving=False, timeout=0):
+    def __init__(self, private_key, app_type, app_id=None, os_id='', dev_id='', auto_receiving=False, timeout=0):
         self._private_key = private_key
         self._is_connected = False
         self._registered_callbacks = {}
@@ -19,12 +18,11 @@ class BiomioClient(object):
         self._timer = None
         if self._auto_receiving:
             self._timer = Timer(timeout, self.receive, ())
-        self._messaging_api = BiomioMessagingAPI()
+        self._messaging_api = BiomioMessagingAPI(app_type=app_type, app_id=app_id, os_id=os_id, dev_id=dev_id)
         self._received_messages = {
             'bye': self._receive_bye,
             'try': self._receive_try,
-            'getResources': self._receive_resource,
-
+            'getResources': self._receive_resource
         }
 
     def connect(self, callback=None):
@@ -81,9 +79,37 @@ class BiomioClient(object):
         if receiver is not None:
             request_type, data = receiver(request)
             self._call_callback(request_type, data)
+        else:
+            print request
+        self._messaging_api.nop()
         if self._auto_receiving:
             self._timer.start()
 
     def _receive_bye(self, request):
         self._is_connected = False
-        return DISCONNECT, {}
+        res = {'connected': self._is_connected}
+        return DISCONNECT, res
+
+    def _receive_try(self, request):
+        req = {'msg': request.msg, 'callback': self._try_callback}
+        return TRY_REQUEST, req
+
+    def _receive_resource(self, request):
+        req = {'callback': self._resource_callback}
+        return RESOURCE_REQUEST, req
+
+    def _receive_repeat(self, request):
+        self._messaging_api.repeat()
+        return REPEAT_REQUEST, {}
+
+    def _try_callback(self, data):
+        self._messaging_api.probe_response(**data)
+
+    def _resource_callback(self, data):
+        self._messaging_api.resources(data)
+
+    def probe(self, data):
+        self._try_callback(data)
+
+    def resources(self, data):
+        self._resource_callback(data)

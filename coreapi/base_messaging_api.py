@@ -6,7 +6,8 @@ from crypt import Crypto
 
 class BaseMessagingAPI(object):
     def __init__(self):
-        self._last_server_message = None
+        self._last_read_message = None
+        self._last_send_message = None
         self._session_token = None
         self._refresh_token = None
         self._session_ttl = None
@@ -64,7 +65,7 @@ class BaseMessagingAPI(object):
         """
         response_str = websocket.recv()
         response = self._create_message_from_json(response_str)
-        self._last_server_message = response
+        self._last_read_message = response
         return response
 
     def _send_message(self, message, websocket=None, wait_for_response=True, close_connection=False):
@@ -79,6 +80,7 @@ class BaseMessagingAPI(object):
         """
         if websocket is None:
             websocket = self.new_connection()
+        self._last_send_message = message
         websocket.send(message.serialize())
         response = None
         if wait_for_response:
