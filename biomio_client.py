@@ -1,5 +1,7 @@
 from coreapi.biomio_messaging_api import BiomioMessagingAPI
 from threading import Timer
+
+
 CONNECT = "biomio::client::connect"
 DISCONNECT = "biomio::client::disconnect"
 RESOURCE_REQUEST = "biomio::client::resource_request"

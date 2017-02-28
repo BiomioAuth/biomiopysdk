@@ -1,5 +1,5 @@
-from message import BiomioMessageBuilder
 from base_messaging_api import BaseMessagingAPI
+from message import BiomioMessageBuilder
 
 
 MODE_SERVER_API = "api::server"
