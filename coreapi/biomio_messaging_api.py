@@ -20,7 +20,7 @@ class BiomioMessagingAPI(BaseMessagingAPI):
             header.update({'oid': 'clientHeader', 'seq': 0})
         elif self._mode == MODE_SERVER_API:
             header.update({'oid': 'serverHeader', 'seq': 1})
-        self._builder = BiomioMessageBuilder(header)
+        self._builder = BiomioMessageBuilder(**header)
 
     def nop(self):
         message = self._builder.create_message(oid='nop')
@@ -76,7 +76,8 @@ class BiomioMessagingAPI(BaseMessagingAPI):
             body['oid'] = 'clientHello'
         elif self._mode == MODE_SERVER_API:
             body['oid'] = 'serverHello'
-        message = self._builder.create_message(body)
+        print body
+        message = self._builder.create_message(**body)
         response = self._send_message(websocket=self._get_curr_connection(), message=message)
         self._check_tokens(response, oid='serverHello')
         return response
@@ -110,7 +111,8 @@ class BiomioMessagingAPI(BaseMessagingAPI):
         return None
 
     def handshake(self, private_key, **kwargs):
-        response = self.hello(kwargs)
+        response = self.hello(**kwargs)
+        print "handshake_response!!!", response.msg, response.header, response.status
         if response and response.header.oid == 'serverHello':
             self.auth(key=self._get_digest_for_next_message(private_key=private_key))
             return True

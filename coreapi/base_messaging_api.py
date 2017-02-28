@@ -39,7 +39,7 @@ class BaseMessagingAPI(object):
         :param: socket_timeout Timeout for socket operations.
         :return: WebSocket connected to server.
         """
-        socket = WebSocket(sslopt=SSL_OPTIONS)
+        socket = WebSocket()#sslopt=SSL_OPTIONS)
         socket.connect(WEBSOCKET_URL)
         socket.settimeout(socket_timeout)
         return socket

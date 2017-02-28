@@ -32,7 +32,7 @@ class BiomioClient(object):
         res = {'connected': self._is_connected}
         if callback is not None:
             callback(res)
-        self._call_callback(CONNECT, res)
+        self._call_callback(CONNECT, **res)
         if self._auto_receiving:
             self._timer.start()
 
@@ -41,7 +41,7 @@ class BiomioClient(object):
         res = {'connected': self._is_connected}
         if callback is not None:
             callback(res)
-        self._call_callback(DISCONNECT, res)
+        self._call_callback(DISCONNECT, **res)
         if self._auto_receiving:
             self._timer.cancel()
 

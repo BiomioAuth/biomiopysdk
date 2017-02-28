@@ -2,20 +2,22 @@ from ..biomio_client import BiomioClient, TRY_REQUEST, RESOURCE_REQUEST
 from nose.tools import nottest
 
 
-class BiomioClientTest:
+class TestBiomioClient:
     def __init__(self):
         self._client = None
         self._private_key = None
-        self._app_type = None
-        self._app_id = None
+        self._app_type = ''
+        self._app_id = ''
         self._os_id = ''
         self._dev_id = ''
 
     def setup(self):
+        print "!!!!"
         pass
 
     def teardown(self):
-        self._client.disconnect()
+        print "????"
+        pass
 
     def active_test(self):
         self._client = BiomioClient(self._private_key, app_type=self._app_type, app_id=self._app_id,
@@ -33,6 +35,8 @@ class BiomioClientTest:
 
         ns = ""
         self._client.enum_calls_request(ns=ns, callback=self._enum_calls_callback)
+        self._client.disconnect()
+        return False
 
     def passive_test(self):
         self._client = BiomioClient(self._private_key, app_type=self._app_type, app_id=self._app_id,
@@ -40,8 +44,11 @@ class BiomioClientTest:
         self._client.register(TRY_REQUEST, self._try_callback)
         self._client.register(RESOURCE_REQUEST, self._resource_callback)
         self._client.connect()
-        while True:
-            pass
+        i = 0
+        while i<1000:
+            i += 1
+        self._client.disconnect()
+        return False
 
     @nottest
     def _request_callback(self, request):
