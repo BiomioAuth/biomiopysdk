@@ -23,6 +23,7 @@ class BiomioMessagingAPI(BaseMessagingAPI):
         self._builder = BiomioMessageBuilder(**header)
 
     def nop(self):
+        print "nop"
         message = self._builder.create_message(oid='nop')
         self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
@@ -46,7 +47,7 @@ class BiomioMessagingAPI(BaseMessagingAPI):
         body = {'oid': 'resources', 'data': data}
         if push_token is not None:
             body.update(push_token=push_token)
-        message = self._builder.create_message(body)
+        message = self._builder.create_message(**body)
         self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
     def try_request(self, try_id, auth_timeout, policy=None, try_info=None, resource=None, message=None):
@@ -59,7 +60,7 @@ class BiomioMessagingAPI(BaseMessagingAPI):
             body.update(resource=resource)
         if message is not None:
             body.update(message=message)
-        message = self._builder.create_message(body)
+        message = self._builder.create_message(**body)
         self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
     def probe_response(self, try_id, try_type, probe_status, probe_data=None):
@@ -67,7 +68,7 @@ class BiomioMessagingAPI(BaseMessagingAPI):
                 'probeStatus': probe_status}
         if probe_data is not None:
             body.update(probeData=probe_data)
-        message = self._builder.create_message(body)
+        message = self._builder.create_message(**body)
         self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
     def hello(self, **kwargs):
@@ -85,42 +86,43 @@ class BiomioMessagingAPI(BaseMessagingAPI):
     def auth(self, **kwargs):
         body = kwargs.copy()
         body.update(oid='auth')
-        message = self._builder.create_message(body)
+        print "!!!!", body
+        message = self._builder.create_message(**body)
         self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
     def rpc_request(self, session_id, on_behalf_of, namespace, call, data={}):
         message = self._builder.create_message(oid='rpcReq', session_id=session_id, onBehalfOf=on_behalf_of,
                                                namespace=namespace, call=call, data=data)
         response = self._send_message(websocket=self._get_curr_connection(), message=message)
-        if response and response.header.oid == 'rpcResp':
+        if response and response.msg.oid == 'rpcResp':
             return response
         return None
 
     def rpc_enum_ns_request(self):
         message = self._builder.create_message(oid='rpcEnumNsReq')
         response = self._send_message(websocket=self._get_curr_connection(), message=message)
-        if response and response.header.oid == 'rpcEnumNsResp':
+        if response and response.msg.oid == 'rpcEnumNsResp':
             return response
         return None
 
     def rpc_enum_calls_request(self, ns):
         message = self._builder.create_message(oid='rpcEnumCallsReq', ns=ns)
         response = self._send_message(websocket=self._get_curr_connection(), message=message)
-        if response and response.header.oid == 'rpcEnumCallsResp':
+        if response and response.msg.oid == 'rpcEnumCallsResp':
             return response
         return None
 
     def handshake(self, private_key, **kwargs):
         response = self.hello(**kwargs)
-        print "handshake_response!!!", response.msg, response.header, response.status
-        if response and response.header.oid == 'serverHello':
+        print "handshake_response!!!", dict(response)
+        if response and response.msg.oid == 'serverHello':
             self.auth(key=self._get_digest_for_next_message(private_key=private_key))
             return True
         return False
 
     def restore(self):
         response = self.hello()
-        if response and response.header.oid == 'serverHello':
+        if response and response.msg.oid == 'serverHello':
             return True
         return False
 
@@ -130,6 +132,6 @@ class BiomioMessagingAPI(BaseMessagingAPI):
 
     def close(self):
         response = self.bye()
-        if response and response.header.oid == 'bye':
+        if response and response.msg.oid == 'bye':
             return True
         return False
