@@ -18,8 +18,7 @@ class BiomioClient(object):
         self._registered_callbacks = {}
         self._auto_receiving = auto_receiving
         self._timer = None
-        if self._auto_receiving:
-            self._timer = Timer(timeout, self.receive, ())
+        self._timeout = timeout
         self._messaging_api = BiomioMessagingAPI(app_type=app_type, app_id=app_id, os_id=os_id, dev_id=dev_id)
         self._received_messages = {
             'bye': self._receive_bye,
@@ -34,9 +33,11 @@ class BiomioClient(object):
             callback(res)
         self._call_callback(CONNECT, **res)
         if self._auto_receiving:
+            self._timer = Timer(self._timeout, self.receive, ())
             self._timer.start()
 
     def disconnect(self, callback=None):
+        print "disconnect"
         self._is_connected = not self._messaging_api.close()
         res = {'connected': self._is_connected}
         if callback is not None:
@@ -72,19 +73,22 @@ class BiomioClient(object):
 
     def _call_callback(self, request_type, **kwargs):
         callback = self._registered_callbacks.get(request_type, None)
+        print callback, request_type, kwargs
         if callback is not None:
-            callback(**kwargs)
+            callback(kwargs)
 
     def receive(self):
         request = self._messaging_api.receive()
-        receiver = self._received_messages.get(request.header.oid, None)
-        if receiver is not None:
-            request_type, data = receiver(request)
-            self._call_callback(request_type, data)
-        else:
-            print request
+        if request:
+            receiver = self._received_messages.get(request.msg.oid, None)
+            if receiver is not None:
+                request_type, data = receiver(request)
+                self._call_callback(request_type, **data)
+            else:
+                print request, dict(request)
         self._messaging_api.nop()
         if self._auto_receiving:
+            self._timer = Timer(self._timeout, self.receive, ())
             self._timer.start()
 
     def _receive_bye(self, request):

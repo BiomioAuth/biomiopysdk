@@ -1,7 +1,7 @@
 from websocket import WebSocket
-
 from settings import DEFAULT_SOCKET_TIMEOUT, SSL_OPTIONS, WEBSOCKET_URL
 from crypt import Crypto
+import sys
 
 
 class BaseMessagingAPI(object):
@@ -51,7 +51,7 @@ class BaseMessagingAPI(object):
         (e.g. setup_test_with_handshake) that creates connection with server
         and send messages to prepare test case.
         """
-        if not self._ws:
+        if not self._ws or not self._ws.connected:
             self._ws = self.new_connection()
         return self._ws
 
@@ -63,10 +63,14 @@ class BaseMessagingAPI(object):
         :param: Websocket connected to server to listen.
         :return: BIOMIO message responce object.
         """
-        response_str = websocket.recv()
-        response = self._create_message_from_json(response_str)
-        self._last_read_message = response
-        return response
+        try:
+            response_str = websocket.recv()
+            response = self._create_message_from_json(response_str)
+            self._last_read_message = response
+            return response
+        except:
+            print sys.exc_info()[0]
+            return None
 
     def _send_message(self, message, websocket=None, wait_for_response=True, close_connection=False):
         """
