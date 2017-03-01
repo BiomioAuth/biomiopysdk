@@ -132,7 +132,6 @@ class BiomioMessagingAPI(BaseMessagingAPI):
 
     def close(self):
         response = self.bye()
-        print dict(response)
         if response and response.msg.oid == 'bye':
             return True
         return False

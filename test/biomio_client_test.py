@@ -57,18 +57,15 @@ class TestBiomioClient:
 
     def passive_test(self):
         self._client = BiomioClient(self._private_key, app_type=self._app_type, app_id=self._app_id,
-                                    os_id=self._os_id, dev_id=self._dev_id, auto_receiving=True, timeout=3)
+                                    os_id=self._os_id, dev_id=self._dev_id, auto_receiving=True, timeout=5)
         self._client.register(TRY_REQUEST, self._try_callback)
         self._client.register(RESOURCE_REQUEST, self._resource_callback)
         self._client.connect()
-        print "passive sleep"
-        time.sleep(25)
-        print "passive wake up"
+        time.sleep(200)
         # i = 0
         # while i<1000:
         #     i += 1
         self._client.disconnect()
-        time.sleep(5)
         return False
 
     @nottest
@@ -127,4 +124,4 @@ class TestBiomioClient:
                 },
             ]
         }
-        request['callback'](**message)
+        request['callback'](message)
