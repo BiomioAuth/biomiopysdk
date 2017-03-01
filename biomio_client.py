@@ -42,9 +42,10 @@ class BiomioClient(object):
         res = {'connected': self._is_connected}
         if callback is not None:
             callback(res)
+        print "&&???", res
         self._call_callback(DISCONNECT, **res)
-        if self._auto_receiving:
-            self._timer.cancel()
+        # if self._auto_receiving:
+        #     self._timer.cancel()
 
     def is_connected(self):
         return self._is_connected
@@ -86,14 +87,17 @@ class BiomioClient(object):
                 self._call_callback(request_type, **data)
             else:
                 print request, dict(request)
-        self._messaging_api.nop()
-        if self._auto_receiving:
+        if self._is_connected:
+            self._messaging_api.nop()
+        if self._auto_receiving and self._is_connected:
             self._timer = Timer(self._timeout, self.receive, ())
             self._timer.start()
 
     def _receive_bye(self, request):
         self._is_connected = False
         res = {'connected': self._is_connected}
+        # if self._auto_receiving:
+        #     self._timer.cancel()
         return DISCONNECT, res
 
     def _receive_try(self, request):
@@ -108,14 +112,14 @@ class BiomioClient(object):
         self._messaging_api.repeat()
         return REPEAT_REQUEST, {}
 
-    def _try_callback(self, data):
-        self._messaging_api.probe_response(**data)
+    def _try_callback(self, **kwargs):
+        self._messaging_api.probe_response(**kwargs)
 
-    def _resource_callback(self, data):
-        self._messaging_api.resources(data)
+    def _resource_callback(self, **kwargs):
+        self._messaging_api.resources(**kwargs)
 
-    def probe(self, data):
-        self._try_callback(data)
+    def probe(self, try_id, try_type, probe_status, probe_data=None):
+        self._messaging_api.probe_response(try_id, try_type, probe_status, probe_data)
 
-    def resources(self, data):
-        self._resource_callback(data)
+    def resources(self, data, push_token=None):
+        self._messaging_api.resources(data, push_token)

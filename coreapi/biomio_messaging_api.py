@@ -114,7 +114,6 @@ class BiomioMessagingAPI(BaseMessagingAPI):
 
     def handshake(self, private_key, **kwargs):
         response = self.hello(**kwargs)
-        print "handshake_response!!!", dict(response)
         if response and response.msg.oid == 'serverHello':
             self.auth(key=self._get_digest_for_next_message(private_key=private_key))
             return True

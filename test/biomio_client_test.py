@@ -61,11 +61,14 @@ class TestBiomioClient:
         self._client.register(TRY_REQUEST, self._try_callback)
         self._client.register(RESOURCE_REQUEST, self._resource_callback)
         self._client.connect()
-        time.sleep(200)
+        print "passive sleep"
+        time.sleep(25)
+        print "passive wake up"
         # i = 0
         # while i<1000:
         #     i += 1
         self._client.disconnect()
+        time.sleep(5)
         return False
 
     @nottest
@@ -124,4 +127,4 @@ class TestBiomioClient:
                 },
             ]
         }
-        request['callback'](message)
+        request['callback'](**message)
