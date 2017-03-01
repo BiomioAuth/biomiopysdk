@@ -116,6 +116,7 @@ BIOMIO_protocol_json_schema = {
             }
         },
         "try": {
+            "type": "object",
             "oneOf": [
                 {"$ref": "#/definitions/tryMessageString"},
                 {"$ref": "#/definitions/tryMessageArray"}
