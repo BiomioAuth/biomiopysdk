@@ -86,15 +86,15 @@ class TestBiomioClient:
     @nottest
     def _try_callback(self, request):
         message = {
-            "probeData": {
+            "probe_data": {
                 "oid": "locationSamples",
                 "samples": ["49.811055,24.079584,65.000000"]
             },
-            "probeStatus": "success",
-            "tType": "location",
+            "probe_status": "success",
+            "try_type": "location",
             "try_id": 'try_id'
         }
-        request['callback'](message)
+        request['callback'](**message)
 
     @nottest
     def _resource_callback(self, request):

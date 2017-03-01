@@ -64,7 +64,7 @@ class BiomioMessagingAPI(BaseMessagingAPI):
         self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
     def probe_response(self, try_id, try_type, probe_status, probe_data=None):
-        body = {'oid': 'probeStatus', 'try_id': try_id, 'try_type': try_type,
+        body = {'oid': 'probe', 'try_id': try_id, 'try_type': try_type,
                 'probeStatus': probe_status}
         if probe_data is not None:
             body.update(probeData=probe_data)
