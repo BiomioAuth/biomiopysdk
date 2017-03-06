@@ -38,17 +38,31 @@ class BiomioClient(object):
 
     def disconnect(self, callback=None):
         print "disconnect"
-        self._is_connected = not self._messaging_api.close()
-        res = {'connected': self._is_connected}
-        if callback is not None:
-            callback(res)
-        print "&&???", res
-        self._call_callback(DISCONNECT, **res)
-        # if self._auto_receiving:
-        #     self._timer.cancel()
+        if self._is_connected:
+            self._is_connected = not self._messaging_api.close()
+            res = {'connected': self._is_connected}
+            if callback is not None:
+                callback(res)
+            print "&&???", res
+            self._call_callback(DISCONNECT, **res)
+            # if self._auto_receiving:
+            #     self._timer.cancel()
 
     def is_connected(self):
         return self._is_connected
+
+    def restore(self, callback=None):
+        if not self._is_connected:
+            res = self._messaging_api.restore()
+            if True:
+                self._is_connected = res
+                res = {'connected': self._is_connected}
+                if callback is not None:
+                    callback(res)
+                self._call_callback(CONNECT, **res)
+                if self._auto_receiving:
+                    self._timer = Timer(self._timeout, self.receive, ())
+                    self._timer.start()
 
     def register(self, request_type, callback):
         if REQUEST_TYPE_LIST.__contains__(request_type) and callback is not None:
@@ -81,6 +95,7 @@ class BiomioClient(object):
     def receive(self):
         request = self._messaging_api.receive()
         if request:
+            print "&&##", dict(request)
             receiver = self._received_messages.get(request.msg.oid, None)
             if receiver is not None:
                 request_type, data = receiver(request)

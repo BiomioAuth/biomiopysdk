@@ -23,7 +23,6 @@ class BiomioMessagingAPI(BaseMessagingAPI):
         self._builder = BiomioMessageBuilder(**header)
 
     def nop(self):
-        print "nop"
         message = self._builder.create_message(oid='nop')
         self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
@@ -64,8 +63,7 @@ class BiomioMessagingAPI(BaseMessagingAPI):
         self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
     def probe_response(self, try_id, try_type, probe_status, probe_data=None):
-        body = {'oid': 'probe', 'try_id': try_id, 'try_type': try_type,
-                'probeStatus': probe_status}
+        body = {'oid': 'probe', 'try_id': try_id, 'tType': try_type, 'probeStatus': probe_status}
         if probe_data is not None:
             body.update(probeData=probe_data)
         message = self._builder.create_message(**body)
@@ -86,7 +84,6 @@ class BiomioMessagingAPI(BaseMessagingAPI):
     def auth(self, **kwargs):
         body = kwargs.copy()
         body.update(oid='auth')
-        print "!!!!", body
         message = self._builder.create_message(**body)
         self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
