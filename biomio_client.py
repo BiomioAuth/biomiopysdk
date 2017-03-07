@@ -1,32 +1,60 @@
+from base_client import BaseClient, CONNECT, DISCONNECT, RESOURCE_REQUEST, TRY_REQUEST, REPEAT_REQUEST, \
+    CLIENT_ERROR, REQUEST_TYPE_LIST
 from coreapi.biomio_messaging_api import BiomioMessagingAPI
 from threading import Timer
 
 
-CONNECT = "biomio::client::connect"
-DISCONNECT = "biomio::client::disconnect"
-RESOURCE_REQUEST = "biomio::client::resource_request"
-TRY_REQUEST = "biomio::client::try_request"
-REPEAT_REQUEST = "biomio::client::repeat_request"
-CLIENT_ERROR = "biomio::client::client_error"
-REQUEST_TYPE_LIST = [CONNECT, DISCONNECT, RESOURCE_REQUEST, TRY_REQUEST, REPEAT_REQUEST, CLIENT_ERROR]
+class BiomioClient(BaseClient):
+    """
+    Communication class with provide client-side communication interface.
 
+    Usage::
 
-class BiomioClient(object):
-    def __init__(self, private_key, app_type, app_id=None, os_id='', dev_id='', auto_receiving=False, timeout=0):
+        >>> from BiomioPySDK import BiomioClient
+        >>> private_key = "..."
+        >>> app_id = "..."
+        >>> client = BiomioClient(private_key, app_type="probe", app_id=app_id, os_id="web")
+        >>> client.connect()
+        >>> ...
+        >>> client.disconnect()
+
+    Parameters:
+        private_key: str
+            RSA Private Key.
+        app_type: str
+            Type of client application.
+        app_id: str
+            Identifier of client application.
+        os_id: str
+            Operation System identifier. Default is ''.
+        dev_id: str
+            Developer identifier. Default is ''.
+            Note: Uses only for some kind of client application.
+        auto_receiving: bool
+            Enable automatic receiving message mode to handle messages from server. Default is False.
+        timeout: int
+            Time interval for websocket's listening in automatic receiving message mode. Default is 0.
+    """
+    def __init__(self, host, port, private_key, app_type, app_id=None, os_id='', dev_id='',
+                 auto_receiving=False, timeout=0):
+        BaseClient.__init__(self)
         self._private_key = private_key
-        self._is_connected = False
-        self._registered_callbacks = {}
         self._auto_receiving = auto_receiving
         self._timer = None
         self._timeout = timeout
-        self._messaging_api = BiomioMessagingAPI(app_type=app_type, app_id=app_id, os_id=os_id, dev_id=dev_id)
-        self._received_messages = {
-            'bye': self._receive_bye,
-            'try': self._receive_try,
-            'getResources': self._receive_resource
-        }
+        self._messaging_api = BiomioMessagingAPI(host=host, port=port, app_type=app_type, app_id=app_id,
+                                                 os_id=os_id, dev_id=dev_id)
 
     def connect(self, callback=None):
+        """
+        Connect client to the server.
+
+        Start regular handshake and connect client to the server. If ``callback`` isn't None or
+        ``CONNECT`` callback is registered call them with connection status.
+        If client's ``auto_receiving`` is True then start event loop for receive messages.
+
+        :param callback: The reference on callback function.
+        """
         self._is_connected = self._messaging_api.handshake(self._private_key)
         res = {'connected': self._is_connected}
         if callback is not None:
@@ -37,18 +65,34 @@ class BiomioClient(object):
             self._timer.start()
 
     def disconnect(self, callback=None):
-        print "disconnect"
-        self._is_connected = not self._messaging_api.close()
-        res = {'connected': self._is_connected}
-        if callback is not None:
-            callback(res)
-        print "&&???", res
-        self._call_callback(DISCONNECT, **res)
-        # if self._auto_receiving:
-        #     self._timer.cancel()
+        """
+        Disconnect client from the server.
+
+        Close connection with the server. If ``callback`` isn't None or ``DISCONNECT`` callback is
+        registered call them with connection status.
+
+        :param callback: The reference on callback function.
+        """
+        if self._is_connected:
+            self._temp_callback = callback
+            self._messaging_api.bye()
 
     def is_connected(self):
+        """Return connection status."""
         return self._is_connected
+
+    def restore(self, callback=None):
+        if not self._is_connected:
+            res = self._messaging_api.restore()
+            if True:
+                self._is_connected = res
+                res = {'connected': self._is_connected}
+                if callback is not None:
+                    callback(res)
+                self._call_callback(CONNECT, **res)
+                if self._auto_receiving:
+                    self._timer = Timer(self._timeout, self.receive, ())
+                    self._timer.start()
 
     def register(self, request_type, callback):
         if REQUEST_TYPE_LIST.__contains__(request_type) and callback is not None:
@@ -72,12 +116,6 @@ class BiomioClient(object):
         if callback is not None:
             callback(response)
 
-    def _call_callback(self, request_type, **kwargs):
-        callback = self._registered_callbacks.get(request_type, None)
-        print callback, request_type, kwargs
-        if callback is not None:
-            callback(kwargs)
-
     def receive(self):
         request = self._messaging_api.receive()
         if request:
@@ -93,33 +131,14 @@ class BiomioClient(object):
             self._timer = Timer(self._timeout, self.receive, ())
             self._timer.start()
 
-    def _receive_bye(self, request):
-        self._is_connected = False
-        res = {'connected': self._is_connected}
-        # if self._auto_receiving:
-        #     self._timer.cancel()
-        return DISCONNECT, res
-
-    def _receive_try(self, request):
-        req = {'msg': request.msg, 'callback': self._try_callback}
-        return TRY_REQUEST, req
-
-    def _receive_resource(self, request):
-        req = {'callback': self._resource_callback}
-        return RESOURCE_REQUEST, req
-
-    def _receive_repeat(self, request):
-        self._messaging_api.repeat()
-        return REPEAT_REQUEST, {}
-
-    def _try_callback(self, **kwargs):
-        self._messaging_api.probe_response(**kwargs)
-
-    def _resource_callback(self, **kwargs):
-        self._messaging_api.resources(**kwargs)
-
     def probe(self, try_id, try_type, probe_status, probe_data=None):
         self._messaging_api.probe_response(try_id, try_type, probe_status, probe_data)
 
     def resources(self, data, push_token=None):
         self._messaging_api.resources(data, push_token)
+
+    def last_request(self):
+        return self._messaging_api.last_sent_message()
+
+    def last_response(self):
+        return self._messaging_api.last_read_message()

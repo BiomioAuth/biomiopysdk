@@ -1,13 +1,17 @@
 from websocket import WebSocket
-from settings import DEFAULT_SOCKET_TIMEOUT, SSL_OPTIONS, WEBSOCKET_URL
+from settings import DEFAULT_SOCKET_TIMEOUT, SSL_OPTIONS
 from crypt import Crypto
 import sys
 
 
+WEBSOCKET_URL = "wss://{host}:{port}/websocket"
+
+
 class BaseMessagingAPI(object):
-    def __init__(self):
+    def __init__(self, host, port):
+        self._websocket_url = WEBSOCKET_URL.format(host=host, port=port)
         self._last_read_message = None
-        self._last_send_message = None
+        self._last_sent_message = None
         self._session_token = None
         self._refresh_token = None
         self._session_ttl = None
@@ -31,8 +35,7 @@ class BaseMessagingAPI(object):
     def _create_message_from_json(self, json_string):
         return self._builder.create_message_from_json(json_string)
 
-    @staticmethod
-    def new_connection(socket_timeout=DEFAULT_SOCKET_TIMEOUT):
+    def _new_connection(self, socket_timeout=DEFAULT_SOCKET_TIMEOUT):
         """
         Creates connection and returns socket that could be used for further
         communication with server.
@@ -40,7 +43,7 @@ class BaseMessagingAPI(object):
         :return: WebSocket connected to server.
         """
         socket = WebSocket()#sslopt=SSL_OPTIONS)
-        socket.connect(WEBSOCKET_URL)
+        socket.connect(self._websocket_url)
         socket.settimeout(socket_timeout)
         return socket
 
@@ -52,7 +55,7 @@ class BaseMessagingAPI(object):
         and send messages to prepare test case.
         """
         if not self._ws or not self._ws.connected:
-            self._ws = self.new_connection()
+            self._ws = self._new_connection()
         return self._ws
 
     def _read_message(self, websocket):
@@ -83,8 +86,8 @@ class BaseMessagingAPI(object):
         :return: WebSocket connected to server.
         """
         if websocket is None:
-            websocket = self.new_connection()
-        self._last_send_message = message
+            websocket = self._new_connection()
+        self._last_sent_message = message
         websocket.send(message.serialize())
         response = None
         if wait_for_response:
