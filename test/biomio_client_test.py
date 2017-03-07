@@ -7,6 +7,8 @@ import os
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 FACE_TRAINING_DATA_PATH = os.path.join(APP_ROOT, "data", "face_training")
+WEBSOCKET_HOST = "gate-dev.biom.io"
+WEBSOCKET_PORT = "8080"
 
 
 class TestBiomioClient:
@@ -42,8 +44,9 @@ class TestBiomioClient:
 
     @nottest
     def active_test(self):
-        self._client = BiomioClient(self._private_key, app_type=self._app_type, app_id=self._app_id,
-                                    os_id=self._os_id, dev_id=self._dev_id, auto_receiving=False, timeout=5)
+        self._client = BiomioClient(WEBSOCKET_HOST, WEBSOCKET_PORT, self._private_key, app_type=self._app_type,
+                                    app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id,
+                                    auto_receiving=False, timeout=5)
         self._client.connect()
         time.sleep(100)
         self._client.disconnect()
@@ -67,8 +70,9 @@ class TestBiomioClient:
         return False
 
     def passive_test(self):
-        self._client = BiomioClient(self._private_key, app_type=self._app_type, app_id=self._app_id,
-                                    os_id=self._os_id, dev_id=self._dev_id, auto_receiving=True, timeout=5)
+        self._client = BiomioClient(WEBSOCKET_HOST, WEBSOCKET_PORT, self._private_key, app_type=self._app_type,
+                                    app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id,
+                                    auto_receiving=True, timeout=5)
         self._client.register(DISCONNECT, self._disconnect_callback)
         self._client.register(TRY_REQUEST, self._try_callback)
         self._client.register(RESOURCE_REQUEST, self._resource_callback)
@@ -76,8 +80,8 @@ class TestBiomioClient:
         print "passive sleep"
         time.sleep(50)
         print "passive wake up"
-        self._client.disconnect()
-        time.sleep(5)
+        self._client.disconnect(self._disconnect_callback)
+        time.sleep(10)
         return False
 
     @nottest
@@ -96,7 +100,6 @@ class TestBiomioClient:
     def _disconnect_callback(self, request):
         # self._client.restore()
         print "CALLBACK", request
-        time.sleep(5)
 
     @nottest
     def _try_callback(self, request):

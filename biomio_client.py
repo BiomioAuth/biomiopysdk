@@ -35,13 +35,15 @@ class BiomioClient(BaseClient):
         timeout: int
             Time interval for websocket's listening in automatic receiving message mode. Default is 0.
     """
-    def __init__(self, private_key, app_type, app_id=None, os_id='', dev_id='', auto_receiving=False, timeout=0):
+    def __init__(self, host, port, private_key, app_type, app_id=None, os_id='', dev_id='',
+                 auto_receiving=False, timeout=0):
         BaseClient.__init__(self)
         self._private_key = private_key
         self._auto_receiving = auto_receiving
         self._timer = None
         self._timeout = timeout
-        self._messaging_api = BiomioMessagingAPI(app_type=app_type, app_id=app_id, os_id=os_id, dev_id=dev_id)
+        self._messaging_api = BiomioMessagingAPI(host=host, port=port, app_type=app_type, app_id=app_id,
+                                                 os_id=os_id, dev_id=dev_id)
 
     def connect(self, callback=None):
         """
@@ -71,16 +73,9 @@ class BiomioClient(BaseClient):
 
         :param callback: The reference on callback function.
         """
-        print "disconnect"
         if self._is_connected:
-            self._is_connected = not self._messaging_api.close()
-            res = {'connected': self._is_connected}
-            if callback is not None:
-                callback(res)
-            print "&&???", res
-            self._call_callback(DISCONNECT, **res)
-            # if self._auto_receiving:
-            #     self._timer.cancel()
+            self._temp_callback = callback
+            self._messaging_api.bye()
 
     def is_connected(self):
         """Return connection status."""
@@ -124,7 +119,6 @@ class BiomioClient(BaseClient):
     def receive(self):
         request = self._messaging_api.receive()
         if request:
-            print "&&##", dict(request)
             receiver = self._received_messages.get(request.msg.oid, None)
             if receiver is not None:
                 request_type, data = receiver(request)
@@ -142,3 +136,9 @@ class BiomioClient(BaseClient):
 
     def resources(self, data, push_token=None):
         self._messaging_api.resources(data, push_token)
+
+    def last_request(self):
+        return self._messaging_api.last_sent_message()
+
+    def last_response(self):
+        return self._messaging_api.last_read_message()
