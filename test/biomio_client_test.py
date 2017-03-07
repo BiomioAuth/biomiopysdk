@@ -128,6 +128,9 @@ class TestBiomioClient:
                     }
                     if len(tries_list) > 1:
                         continue
+                else:
+                    if len(tries_list) > 1:
+                        continue
                 curr_message = message.copy()
                 curr_message.update({'probe_data': probe_data, 'try_type': try_data['tType']})
                 request['callback'](**curr_message)
