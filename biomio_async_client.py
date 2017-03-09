@@ -1,6 +1,6 @@
 from base_client import BaseClient, CONNECT, REQUEST_TYPE_LIST
 from coreapi.biomio_messaging_api import BiomioMessagingAPI
-from threading import Timer
+import threading
 
 
 class BiomioAsyncClient(BaseClient):
@@ -39,7 +39,7 @@ class BiomioAsyncClient(BaseClient):
         BaseClient.__init__(self)
         self._private_key = private_key
         self._auto_receiving = auto_receiving
-        self._timer = None
+        self._t = None
         self._timeout = timeout
         self._messaging_api = BiomioMessagingAPI(host=host, port=port, app_type=app_type, app_id=app_id,
                                                  os_id=os_id, dev_id=dev_id)
@@ -60,8 +60,8 @@ class BiomioAsyncClient(BaseClient):
             callback(res)
         self._call_callback(CONNECT, **res)
         if self._auto_receiving:
-            self._timer = Timer(self._timeout, self.receive, ())
-            self._timer.start()
+            self._t = threading.Thread(target=self._receive)
+            self._t.start()
 
     def disconnect(self, callback=None):
         """
@@ -79,19 +79,6 @@ class BiomioAsyncClient(BaseClient):
     def is_connected(self):
         """Return connection status."""
         return self._is_connected
-
-    def restore(self, callback=None):
-        if not self._is_connected:
-            res = self._messaging_api.restore()
-            if True:
-                self._is_connected = res
-                res = {'connected': self._is_connected}
-                if callback is not None:
-                    callback(res)
-                self._call_callback(CONNECT, **res)
-                if self._auto_receiving:
-                    self._timer = Timer(self._timeout, self.receive, ())
-                    self._timer.start()
 
     def register(self, request_type, callback):
         if REQUEST_TYPE_LIST.__contains__(request_type) and callback is not None:
@@ -116,13 +103,15 @@ class BiomioAsyncClient(BaseClient):
             callback(response)
 
     def receive(self):
-        request = self._messaging_api.receive()
+        request = self._messaging_api.select()
         self._handle_request(request)
-        if self._is_connected:
-            self._messaging_api.nop()
-        if self._auto_receiving and self._is_connected:
-            self._timer = Timer(self._timeout, self.receive, ())
-            self._timer.start()
+
+    def _receive(self):
+        while self._is_connected:
+            request = self._messaging_api.select(self._timeout)
+            self._handle_request(request)
+            if self._is_connected:
+                self._messaging_api.nop()
 
     def probe(self, try_id, try_type, probe_status, probe_data=None):
         self._messaging_api.probe_response(try_id, try_type, probe_status, probe_data)
