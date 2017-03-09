@@ -1,10 +1,19 @@
 from websocket import WebSocket
 from settings import DEFAULT_SOCKET_TIMEOUT, SSL_OPTIONS
 from crypt import Crypto
+import select
 import sys
 
 
 WEBSOCKET_URL = "wss://{host}:{port}/websocket"
+
+
+OPCODE_CONT = 0x0
+OPCODE_TEXT = 0x1
+OPCODE_BINARY = 0x2
+OPCODE_CLOSE = 0x8
+OPCODE_PING = 0x9
+OPCODE_PONG = 0xa
 
 
 class BaseMessagingAPI(object):
@@ -23,6 +32,28 @@ class BaseMessagingAPI(object):
         request = self._read_message(self._ws)
         if request:
             return request
+        return None
+
+    def select(self, ping_timeout=0):
+        r, w, e = select.select((self._ws.sock, ), (), (), ping_timeout)
+        if r:
+            op_code, frame = self._ws.recv_data_frame(True)
+            data = frame.data
+            if op_code == OPCODE_CLOSE:
+                pass
+            elif op_code == OPCODE_CONT:
+                pass
+            elif op_code == OPCODE_TEXT:
+                pass
+            elif op_code == OPCODE_BINARY:
+                pass
+            elif op_code == OPCODE_PING:
+                pass
+            elif op_code == OPCODE_PONG:
+                pass
+            response = self._create_message_from_json(data)
+            self._last_read_message = response
+            return response
         return None
 
     def _get_digest_for_next_message(self, private_key):

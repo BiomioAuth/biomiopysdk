@@ -20,6 +20,16 @@ class BaseClient(object):
         }
         self._temp_callback = None
 
+    def _handle_request(self, request):
+        if request:
+            print "REQ", request
+            receiver = self._received_messages.get(request.msg.oid, None)
+            if receiver is not None:
+                request_type, data = receiver(request)
+                self._call_callback(request_type, **data)
+            else:
+                print request, dict(request)
+
     def _call_callback(self, request_type, **kwargs):
         callback = self._registered_callbacks.get(request_type, None)
         print callback, request_type, kwargs

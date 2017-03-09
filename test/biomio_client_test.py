@@ -1,4 +1,4 @@
-from ..biomio_client import BiomioClient, TRY_REQUEST, RESOURCE_REQUEST, DISCONNECT
+from .. import BiomioClient, TRY_REQUEST, RESOURCE_REQUEST, DISCONNECT
 from binascii import b2a_base64
 from nose.tools import nottest
 from utils import get_files
@@ -42,17 +42,20 @@ class TestBiomioClient:
         print "????"
         pass
 
-    @nottest
+    # @nottest
     def active_test(self):
         self._client = BiomioClient(WEBSOCKET_HOST, WEBSOCKET_PORT, self._private_key, app_type=self._app_type,
-                                    app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id,
-                                    auto_receiving=False, timeout=5)
-        self._client.connect()
-        time.sleep(100)
-        self._client.disconnect()
-        time.sleep(5)
-        self._client.restore()
-        time.sleep(100)
+                                    app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id)
+        self._client.register(DISCONNECT, self._disconnect_callback)
+        self._client.register(TRY_REQUEST, self._try_callback)
+        self._client.register(RESOURCE_REQUEST, self._resource_callback)
+        # self._client.connect()
+        self._client.run()
+        # time.sleep(100)
+        # self._client.disconnect()
+        # time.sleep(5)
+        # self._client.restore()
+        # time.sleep(100)
 
         session_id = ""
         on_behalf_of = ""
@@ -69,10 +72,10 @@ class TestBiomioClient:
         time.sleep(5)
         return False
 
+    @nottest
     def passive_test(self):
         self._client = BiomioClient(WEBSOCKET_HOST, WEBSOCKET_PORT, self._private_key, app_type=self._app_type,
-                                    app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id,
-                                    auto_receiving=True, timeout=5)
+                                    app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id)
         self._client.register(DISCONNECT, self._disconnect_callback)
         self._client.register(TRY_REQUEST, self._try_callback)
         self._client.register(RESOURCE_REQUEST, self._resource_callback)

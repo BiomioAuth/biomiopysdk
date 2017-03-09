@@ -1,7 +1,5 @@
-from base_client import BaseClient, CONNECT, DISCONNECT, RESOURCE_REQUEST, TRY_REQUEST, REPEAT_REQUEST, \
-    CLIENT_ERROR, REQUEST_TYPE_LIST
+from base_client import BaseClient, CONNECT, REQUEST_TYPE_LIST
 from coreapi.biomio_messaging_api import BiomioMessagingAPI
-from threading import Timer
 
 
 class BiomioClient(BaseClient):
@@ -30,18 +28,10 @@ class BiomioClient(BaseClient):
         dev_id: str
             Developer identifier. Default is ''.
             Note: Uses only for some kind of client application.
-        auto_receiving: bool
-            Enable automatic receiving message mode to handle messages from server. Default is False.
-        timeout: int
-            Time interval for websocket's listening in automatic receiving message mode. Default is 0.
     """
-    def __init__(self, host, port, private_key, app_type, app_id=None, os_id='', dev_id='',
-                 auto_receiving=False, timeout=0):
+    def __init__(self, host, port, private_key, app_type, app_id=None, os_id='', dev_id=''):
         BaseClient.__init__(self)
         self._private_key = private_key
-        self._auto_receiving = auto_receiving
-        self._timer = None
-        self._timeout = timeout
         self._messaging_api = BiomioMessagingAPI(host=host, port=port, app_type=app_type, app_id=app_id,
                                                  os_id=os_id, dev_id=dev_id)
 
@@ -51,7 +41,6 @@ class BiomioClient(BaseClient):
 
         Start regular handshake and connect client to the server. If ``callback`` isn't None or
         ``CONNECT`` callback is registered call them with connection status.
-        If client's ``auto_receiving`` is True then start event loop for receive messages.
 
         :param callback: The reference on callback function.
         """
@@ -60,9 +49,6 @@ class BiomioClient(BaseClient):
         if callback is not None:
             callback(res)
         self._call_callback(CONNECT, **res)
-        if self._auto_receiving:
-            self._timer = Timer(self._timeout, self.receive, ())
-            self._timer.start()
 
     def disconnect(self, callback=None):
         """
@@ -90,9 +76,6 @@ class BiomioClient(BaseClient):
                 if callback is not None:
                     callback(res)
                 self._call_callback(CONNECT, **res)
-                if self._auto_receiving:
-                    self._timer = Timer(self._timeout, self.receive, ())
-                    self._timer.start()
 
     def register(self, request_type, callback):
         if REQUEST_TYPE_LIST.__contains__(request_type) and callback is not None:
@@ -117,19 +100,17 @@ class BiomioClient(BaseClient):
             callback(response)
 
     def receive(self):
-        request = self._messaging_api.receive()
-        if request:
-            receiver = self._received_messages.get(request.msg.oid, None)
-            if receiver is not None:
-                request_type, data = receiver(request)
-                self._call_callback(request_type, **data)
-            else:
-                print request, dict(request)
-        if self._is_connected:
-            self._messaging_api.nop()
-        if self._auto_receiving and self._is_connected:
-            self._timer = Timer(self._timeout, self.receive, ())
-            self._timer.start()
+        request = self._messaging_api.select()
+        self._handle_request(request)
+
+    def run(self):
+        if not self._is_connected:
+            self.connect()
+        while self._is_connected:
+            request = self._messaging_api.select()
+            self._handle_request(request)
+            if self._is_connected:
+                self._messaging_api.nop()
 
     def probe(self, try_id, try_type, probe_status, probe_data=None):
         self._messaging_api.probe_response(try_id, try_type, probe_status, probe_data)
