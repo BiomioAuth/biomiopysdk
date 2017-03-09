@@ -78,9 +78,13 @@ class TestBiomioClient:
         self._client.register(RESOURCE_REQUEST, self._resource_callback)
         self._client.connect()
         print "passive sleep"
-        time.sleep(50)
+        time.sleep(20)
+        self._client.disconnect()
+        time.sleep(10)
+        self._client.restore(self._restore_callback)
+        time.sleep(20)
         print "passive wake up"
-        self._client.disconnect(self._disconnect_callback)
+        self._client.disconnect()
         time.sleep(10)
         return False
 
@@ -95,6 +99,10 @@ class TestBiomioClient:
     @nottest
     def _enum_calls_callback(self, request):
         print request
+
+    @nottest
+    def _restore_callback(self, request):
+        print "restore", request
 
     @nottest
     def _disconnect_callback(self, request):
