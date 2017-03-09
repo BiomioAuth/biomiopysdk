@@ -67,16 +67,6 @@ class BiomioClient(BaseClient):
         """Return connection status."""
         return self._is_connected
 
-    def restore(self, callback=None):
-        if not self._is_connected:
-            res = self._messaging_api.restore()
-            if True:
-                self._is_connected = res
-                res = {'connected': self._is_connected}
-                if callback is not None:
-                    callback(res)
-                self._call_callback(CONNECT, **res)
-
     def register(self, request_type, callback):
         if REQUEST_TYPE_LIST.__contains__(request_type) and callback is not None:
             self._registered_callbacks[request_type] = callback

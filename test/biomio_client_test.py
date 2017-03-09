@@ -49,13 +49,7 @@ class TestBiomioClient:
         self._client.register(DISCONNECT, self._disconnect_callback)
         self._client.register(TRY_REQUEST, self._try_callback)
         self._client.register(RESOURCE_REQUEST, self._resource_callback)
-        # self._client.connect()
         self._client.run()
-        # time.sleep(100)
-        # self._client.disconnect()
-        # time.sleep(5)
-        # self._client.restore()
-        # time.sleep(100)
 
         session_id = ""
         on_behalf_of = ""
@@ -81,10 +75,6 @@ class TestBiomioClient:
         self._client.register(RESOURCE_REQUEST, self._resource_callback)
         self._client.connect()
         print "passive sleep"
-        time.sleep(20)
-        self._client.disconnect()
-        time.sleep(10)
-        self._client.restore(self._restore_callback)
         time.sleep(20)
         print "passive wake up"
         self._client.disconnect()

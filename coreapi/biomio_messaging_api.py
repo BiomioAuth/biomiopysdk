@@ -115,12 +115,6 @@ class BiomioMessagingAPI(BaseMessagingAPI):
             return True
         return False
 
-    def restore(self):
-        response = self.hello()
-        if response and response.msg.oid == 'serverHello':
-            return True
-        return False
-
     def repeat(self):
         self._send_message(message=self._last_sent_message, websocket=self._get_curr_connection(),
                            wait_for_response=False)
