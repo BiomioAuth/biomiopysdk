@@ -2,6 +2,7 @@ from .. import BiomioClient, TRY_REQUEST, RESOURCE_REQUEST, DISCONNECT
 from binascii import b2a_base64
 from nose.tools import nottest
 from utils import get_files
+import threading
 import time
 import os
 
@@ -49,19 +50,34 @@ class TestBiomioClient:
         self._client.register(DISCONNECT, self._disconnect_callback)
         self._client.register(TRY_REQUEST, self._try_callback)
         self._client.register(RESOURCE_REQUEST, self._resource_callback)
-        self._client.run()
+        t = threading.Thread(target=self._client.run)
+        t.start()
 
         session_id = ""
-        on_behalf_of = ""
-        namespace = ""
-        call_pr = ""
-        data = ""
-        # self._client.request(session_id, on_behalf_of, namespace, call_pr, data, callback=self._request_callback)
+        on_behalf_of = "biomio.vk.test@gmail.com"
+        namespace = "auth_client_plugin"
+        call_pr = "process_auth"
+        data = {
+            "keys": ["email", "auth_code"],
+            "values": ["biomio.vk.test@gmail.com", "NO_REST"]
+        }
 
-        # self._client.enum_ns_request(callback=self._enum_ns_callback)
+        i = 0
+        time.sleep(5)
+        self._client.request(session_id, on_behalf_of, namespace, call_pr, data, callback=self._request_callback)
+        while True:
+            time.sleep(2)
 
-        ns = ""
-        # self._client.enum_calls_request(ns=ns, callback=self._enum_calls_callback)
+            i += 1
+            # if i == 2:
+            #     self._client.disconnect()
+            # if i == 4:
+            #     self._client.connect()
+            #     t = threading.Thread(target=self._client.run)
+            #     t.start()
+            if i == 20:
+                break
+        print "wake up"
         self._client.disconnect()
         time.sleep(5)
         return False
@@ -83,7 +99,7 @@ class TestBiomioClient:
 
     @nottest
     def _request_callback(self, request):
-        print request
+        print "REQ CALLBACK", dict(request)
 
     @nottest
     def _enum_ns_callback(self, request):
