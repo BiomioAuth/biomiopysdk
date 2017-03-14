@@ -89,24 +89,15 @@ class BiomioMessagingAPI(BaseMessagingAPI):
     def rpc_request(self, session_id, on_behalf_of, namespace, call, data={}):
         message = self._builder.create_message(oid='rpcReq', session_id=session_id, onBehalfOf=on_behalf_of,
                                                namespace=namespace, call=call, data=data)
-        response = self._send_message(websocket=self._get_curr_connection(), message=message)
-        if response and response.msg.oid == 'rpcResp':
-            return response
-        return None
+        self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
     def rpc_enum_ns_request(self):
         message = self._builder.create_message(oid='rpcEnumNsReq')
-        response = self._send_message(websocket=self._get_curr_connection(), message=message)
-        if response and response.msg.oid == 'rpcEnumNsResp':
-            return response
-        return None
+        self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
     def rpc_enum_calls_request(self, ns):
         message = self._builder.create_message(oid='rpcEnumCallsReq', ns=ns)
-        response = self._send_message(websocket=self._get_curr_connection(), message=message)
-        if response and response.msg.oid == 'rpcEnumCallsResp':
-            return response
-        return None
+        self._send_message(websocket=self._get_curr_connection(), message=message, wait_for_response=False)
 
     def handshake(self, private_key, **kwargs):
         response = self.hello(**kwargs)

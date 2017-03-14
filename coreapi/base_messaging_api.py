@@ -38,20 +38,7 @@ class BaseMessagingAPI(object):
         r, w, e = select.select((self._ws.sock, ), (), (), ping_timeout)
         if r:
             op_code, frame = self._ws.recv_data_frame(True)
-            data = frame.data
-            if op_code == OPCODE_CLOSE:
-                pass
-            elif op_code == OPCODE_CONT:
-                pass
-            elif op_code == OPCODE_TEXT:
-                pass
-            elif op_code == OPCODE_BINARY:
-                pass
-            elif op_code == OPCODE_PING:
-                pass
-            elif op_code == OPCODE_PONG:
-                pass
-            response = self._create_message_from_json(data)
+            response = self._create_message_from_json(frame.data)
             self._last_read_message = response
             return response
         return None
@@ -98,10 +85,7 @@ class BaseMessagingAPI(object):
         :return: BIOMIO message responce object.
         """
         try:
-            response_str = websocket.recv()
-            response = self._create_message_from_json(response_str)
-            self._last_read_message = response
-            return response
+            return self.select(5)
         except:
             print sys.exc_info()[0]
             return None
@@ -145,3 +129,7 @@ class BaseMessagingAPI(object):
         """
         self._builder.set_header(token=token)
         self._session_token = token
+
+    def clear_session_token(self):
+        self._builder.delete_header_key('token')
+        self._session_token = None
