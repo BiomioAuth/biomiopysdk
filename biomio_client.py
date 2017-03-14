@@ -74,20 +74,20 @@ class BiomioClient(BaseClient):
         return False
 
     def request(self, session_id, on_behalf_of, namespace, call, data, callback):
-        response = self._messaging_api.rpc_request(session_id=session_id, on_behalf_of=on_behalf_of,
-                                                   namespace=namespace, call=call, data=data)
         if callback is not None:
-            callback(response)
+            self._additional_messages['rpcResp'] = callback
+        self._messaging_api.rpc_request(session_id=session_id, on_behalf_of=on_behalf_of,
+                                        namespace=namespace, call=call, data=data)
 
     def enum_ns_request(self, callback):
-        response = self._messaging_api.rpc_enum_ns_request()
         if callback is not None:
-            callback(response)
+            self._additional_messages['rpcEnumNsResp'] = callback
+        self._messaging_api.rpc_enum_ns_request()
 
     def enum_calls_request(self, ns, callback):
-        response = self._messaging_api.rpc_enum_calls_request(ns)
         if callback is not None:
-            callback(response)
+            self._additional_messages['rpcEnumCallsResp'] = callback
+        self._messaging_api.rpc_enum_calls_request(ns)
 
     def receive(self):
         request = self._messaging_api.select()
@@ -97,9 +97,9 @@ class BiomioClient(BaseClient):
         if not self._is_connected:
             self.connect()
         while self._is_connected:
-            request = self._messaging_api.select()
+            request = self._messaging_api.select(3)
             self._handle_request(request)
-            if self._is_connected:
+            if self._is_connected and request is None:
                 self._messaging_api.nop()
 
     def probe(self, try_id, try_type, probe_status, probe_data=None):

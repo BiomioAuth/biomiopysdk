@@ -18,17 +18,18 @@ class BaseClient(object):
             'getResources': self._receive_resource,
             'again': self._receive_repeat
         }
+        self._additional_messages = {}
         self._temp_callback = None
 
     def _handle_request(self, request):
         if request:
-            print "REQ", request
             receiver = self._received_messages.get(request.msg.oid, None)
             if receiver is not None:
                 request_type, data = receiver(request)
                 self._call_callback(request_type, **data)
             else:
                 print request, dict(request)
+                self._additional_callback(request)
 
     def _call_callback(self, request_type, **kwargs):
         callback = self._registered_callbacks.get(request_type, None)
@@ -39,6 +40,8 @@ class BaseClient(object):
     def _receive_bye(self, request):
         self._is_connected = request.msg.oid != "bye"
         res = {'connected': self._is_connected}
+        if not self._is_connected:
+            self._messaging_api.clear_session_token()
         if self._temp_callback is not None:
             self._temp_callback(res)
             self._temp_callback = None
@@ -55,6 +58,12 @@ class BaseClient(object):
     def _receive_repeat(self, request):
         self._messaging_api.repeat()
         return None, {}
+
+    def _additional_callback(self, request):
+        if request:
+            callback = self._additional_messages.get(request.msg.oid, None)
+            if callback is not None:
+                callback(request)
 
     def _try_callback(self, **kwargs):
         self._messaging_api.probe_response(**kwargs)
