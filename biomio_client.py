@@ -76,9 +76,10 @@ class BiomioClient(BaseClient):
         If ``callback`` function is successfully registered, method returns True. Otherwise, the method
         returns False.
 
-        :param request_type: Available request type.
+        :param str request_type: Available request type.
         :param callback: The reference on callback function.
         :return: The registration status.
+        :rtype: boolean
         """
         if REQUEST_TYPE_LIST.__contains__(request_type) and callback is not None:
             self._registered_callbacks[request_type] = callback
