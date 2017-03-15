@@ -36,20 +36,19 @@ class TestBiomioClient:
         self._dev_id = 'c1d277535c7fbc2'
 
     def setup(self):
-        print "!!!!"
-        pass
-
-    def teardown(self):
-        print "????"
-        pass
-
-    # @nottest
-    def active_test(self):
         self._client = BiomioClient(WEBSOCKET_HOST, WEBSOCKET_PORT, self._private_key, app_type=self._app_type,
                                     app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id)
         self._client.register(DISCONNECT, self._disconnect_callback)
         self._client.register(TRY_REQUEST, self._try_callback)
         self._client.register(RESOURCE_REQUEST, self._resource_callback)
+        print "!!SETUP!!"
+
+    def teardown(self):
+        self._client.disconnect()
+        time.sleep(10)
+        print "||TEARDOWN||"
+
+    def active_test(self):
         t = threading.Thread(target=self._client.run)
         t.start()
 
@@ -62,40 +61,21 @@ class TestBiomioClient:
             "values": ["biomio.vk.test@gmail.com", "NO_REST"]
         }
 
-        i = 0
         time.sleep(5)
         self._client.request(session_id, on_behalf_of, namespace, call_pr, data, callback=self._request_callback)
+        i = 0
         while True:
             time.sleep(2)
-
             i += 1
-            # if i == 2:
-            #     self._client.disconnect()
-            # if i == 4:
-            #     self._client.connect()
-            #     t = threading.Thread(target=self._client.run)
-            #     t.start()
             if i == 20:
                 break
         print "wake up"
-        self._client.disconnect()
-        time.sleep(5)
-        return False
 
-    @nottest
     def passive_test(self):
-        self._client = BiomioClient(WEBSOCKET_HOST, WEBSOCKET_PORT, self._private_key, app_type=self._app_type,
-                                    app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id)
-        self._client.register(DISCONNECT, self._disconnect_callback)
-        self._client.register(TRY_REQUEST, self._try_callback)
-        self._client.register(RESOURCE_REQUEST, self._resource_callback)
-        self._client.connect()
-        print "passive sleep"
-        time.sleep(20)
+        self._client.run()
+        # print "passive sleep"
+        # time.sleep(20)
         print "passive wake up"
-        self._client.disconnect()
-        time.sleep(10)
-        return False
 
     @nottest
     def _request_callback(self, request):
@@ -115,8 +95,7 @@ class TestBiomioClient:
 
     @nottest
     def _disconnect_callback(self, request):
-        # self._client.restore()
-        print "CALLBACK", request
+        print "DISCONNECT CALLBACK", request
 
     @nottest
     def _try_callback(self, request):
