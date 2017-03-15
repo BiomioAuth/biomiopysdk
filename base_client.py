@@ -28,18 +28,16 @@ class BaseClient(object):
                 request_type, data = receiver(request)
                 self._call_callback(request_type, **data)
             else:
-                print request, dict(request)
                 self._additional_callback(request)
 
     def _call_callback(self, request_type, **kwargs):
         callback = self._registered_callbacks.get(request_type, None)
-        print callback, request_type, kwargs
         if callback is not None:
             callback(kwargs)
 
     def _receive_bye(self, request):
         self._is_connected = request.msg.oid != "bye"
-        res = {'connected': self._is_connected}
+        res = {'connected': self._is_connected, 'status': request.status}
         if not self._is_connected:
             self._messaging_api.clear_session_token()
         if self._temp_callback is not None:
