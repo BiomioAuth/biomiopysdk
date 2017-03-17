@@ -8,6 +8,10 @@ REQUEST_TYPE_LIST = [CONNECT, DISCONNECT, RESOURCE_REQUEST, TRY_REQUEST, CLIENT_
 
 
 class BaseClient(object):
+    """
+    Base class for BiomioClient which provides backend methods for communication and
+    callback mechanism support.
+    """
     def __init__(self):
         self._is_connected = False
         self._registered_callbacks = {}

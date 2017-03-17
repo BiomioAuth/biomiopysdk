@@ -16,18 +16,13 @@ class BiomioClient(BaseClient):
         >>> ...
         >>> client.disconnect()
 
-    Parameters:
-        private_key: str
-            RSA Private Key.
-        app_type: str
-            Type of client application.
-        app_id: str
-            Identifier of client application.
-        os_id: str
-            Operation System identifier. Default is ''.
-        dev_id: str
-            Developer identifier. Default is ''.
-            Note: Uses only for some kind of client application.
+    :param str host: Biomio back-end address.
+    :param str port: Biomio back-end port number.
+    :param str private_key: RSA Private Key.
+    :param str app_type: Type of client application (e.g. "extension", "probe").
+    :param str app_id: Identifier of client application.
+    :param str os_id: Operation System identifier. Default is ''.
+    :param str dev_id: Developer identifier. Default is ''. Note: Uses only for some kind of client application.
     """
     def __init__(self, host, port, private_key, app_type, app_id=None, os_id='', dev_id=''):
         BaseClient.__init__(self)
@@ -77,7 +72,7 @@ class BiomioClient(BaseClient):
         returns False.
 
         :param str request_type: Available request type.
-        :param callback: The reference on callback function.
+        :param callback callback: The reference on callback function.
         :return: The registration status.
         :rtype: boolean
         """
@@ -93,12 +88,12 @@ class BiomioClient(BaseClient):
         Send RPC request to the server for call ``call`` function from given ``namespace`` with given ``data``.
         If ``callback`` isn't None, it's called with request response.
 
-        :param session_id: A string, the session identifier.
-        :param on_behalf_of: A string, the user identifier.
-        :param namespace: A string, the namespace name.
-        :param call: A string, the name of the callable function from ``namespace``.
-        :param data: A dictionary, request data.
-        :param callback: The reference on callback function.
+        :param str session_id: The session identifier.
+        :param str on_behalf_of: The client identifier.
+        :param str namespace: The namespace name.
+        :param str call: The name of the callable function from ``namespace``.
+        :param dict data: Request data dictionary.
+        :param callback callback: The reference on callback function.
         """
         if callback is not None:
             self._additional_messages['rpcResp'] = callback
@@ -111,7 +106,7 @@ class BiomioClient(BaseClient):
 
         Send RPC enum ns request to the server. If ``callback`` isn't None, it's called with request response.
 
-        :param callback: The reference on callback function.
+        :param callback callback: The reference on callback function.
         """
         if callback is not None:
             self._additional_messages['rpcEnumNsResp'] = callback
@@ -124,8 +119,8 @@ class BiomioClient(BaseClient):
         Send RPC enum calls request to the server with given ``ns``. If ``callback`` isn't None, it's called
         with request response.
 
-        :param ns:
-        :param callback: The reference on callback function.
+        :param str ns: The namespace name.
+        :param callback callback: The reference on callback function.
         """
         if callback is not None:
             self._additional_messages['rpcEnumCallsResp'] = callback
@@ -172,8 +167,9 @@ class BiomioClient(BaseClient):
         """
         Resources response. Send resources data to the server.
 
-        :param data: A list of dictionary with resource description.
-        :param push_token:
+        :param list data: A list of dictionary with resource description.
+        :param str push_token: Push Notification Token for probe client device (for example,
+               APNs Token on iOS devices).
         """
         self._messaging_api.resources(data, push_token)
 
