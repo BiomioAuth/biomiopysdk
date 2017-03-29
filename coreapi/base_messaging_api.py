@@ -1,22 +1,24 @@
 from websocket import WebSocket
-from settings import DEFAULT_SOCKET_TIMEOUT, SSL_OPTIONS
 from crypt import Crypto
 import select
 import sys
 
 
 WEBSOCKET_URL = "wss://{host}:{port}/websocket"
-
-
-OPCODE_CONT = 0x0
-OPCODE_TEXT = 0x1
-OPCODE_BINARY = 0x2
-OPCODE_CLOSE = 0x8
-OPCODE_PING = 0x9
-OPCODE_PONG = 0xa
+DEFAULT_SOCKET_TIMEOUT = 5  # seconds
+SSL_OPTIONS = {
+    "ca_certs": "server.pem"
+}
 
 
 class BaseMessagingAPI(object):
+    """
+    Base class for BiomioMessagingAPI which provides backend methods for sending and receiving messages and
+    handle websoket state.
+
+    :param str host: Biomio back-end address.
+    :param str port: Biomio back-end port number.
+    """
     def __init__(self, host, port):
         self._websocket_url = WEBSOCKET_URL.format(host=host, port=port)
         self._last_read_message = None
@@ -28,13 +30,16 @@ class BaseMessagingAPI(object):
         self._builder = None
         self._ws = None
 
-    def receive(self):
-        request = self._read_message(self._ws)
-        if request:
-            return request
-        return None
+    def select(self, timeout=0):
+        """
+        Return received message.
 
-    def select(self, ping_timeout=0):
+        Wait for message in ``timeout`` time and return received message. If there isn't a message, returns ``None``.
+
+        :param int timeout: The timeout for message receiving.
+        :return: The received message.
+        :rtype: message object or None
+        """
         r, w, e = select.select((self._ws.sock, ), (), (), ping_timeout)
         if r:
             op_code, frame = self._ws.recv_data_frame(True)
@@ -131,5 +136,6 @@ class BaseMessagingAPI(object):
         self._session_token = token
 
     def clear_session_token(self):
+        """Clear session data."""
         self._builder.delete_header_key('token')
         self._session_token = None

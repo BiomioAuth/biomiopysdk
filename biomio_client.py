@@ -8,13 +8,16 @@ class BiomioClient(BaseClient):
 
     Usage::
 
-        >>> from BiomioPySDK import BiomioClient
+        >>> from biomiopysdk import BiomioClient, TRY_REQUEST
+        >>>
+        >>> def try_callback(request)
+        >>>     ...
+        >>>
         >>> private_key = "..."
         >>> app_id = "..."
         >>> client = BiomioClient(private_key, app_type="probe", app_id=app_id, os_id="web")
-        >>> client.connect()
-        >>> ...
-        >>> client.disconnect()
+        >>> client.register(TRY_REQUEST, try_callback)
+        >>> client.run()
 
     :param str host: Biomio back-end address.
     :param str port: Biomio back-end port number.
@@ -24,7 +27,7 @@ class BiomioClient(BaseClient):
     :param str os_id: Operation System identifier. Default is ''.
     :param str dev_id: Developer identifier. Default is ''. Note: Uses only for some kind of client application.
     """
-    def __init__(self, host, port, private_key, app_type, app_id=None, os_id='', dev_id=''):
+    def __init__(self, host, port, private_key, app_type, app_id, os_id='', dev_id=''):
         BaseClient.__init__(self)
         self._private_key = private_key
         self._messaging_api = BiomioMessagingAPI(host=host, port=port, app_type=app_type, app_id=app_id,
@@ -68,7 +71,7 @@ class BiomioClient(BaseClient):
 
         Register ``callback`` function for given ``request_type``. If there already is a callback function
         registered, it will be replaced on given one.
-        If ``callback`` function is successfully registered, method returns True. Otherwise, the method
+        If a ``callback`` function is successfully registered, method returns True. Otherwise, the method
         returns False.
 
         :param str request_type: Available request type.
@@ -85,8 +88,8 @@ class BiomioClient(BaseClient):
         """
         Send RPC request to the server.
 
-        Send RPC request to the server for call ``call`` function from given ``namespace`` with given ``data``.
-        If ``callback`` isn't None, it's called with request response.
+        Send RPC request to the server to call ``call`` function from given ``namespace`` with given ``data``.
+        If ``callback`` isn't None, it's called with the request response.
 
         :param str session_id: The session identifier.
         :param str on_behalf_of: The client identifier.
@@ -104,7 +107,7 @@ class BiomioClient(BaseClient):
         """
         Send RPC enum ns request to the server.
 
-        Send RPC enum ns request to the server. If ``callback`` isn't None, it's called with request response.
+        Send RPC enum ns request to the server. If ``callback`` isn't None, it's called with the request response.
 
         :param callback callback: The reference on callback function.
         """
@@ -117,7 +120,7 @@ class BiomioClient(BaseClient):
         Send RPC enum calls request to the server.
 
         Send RPC enum calls request to the server with given ``ns``. If ``callback`` isn't None, it's called
-        with request response.
+        with the request response.
 
         :param str ns: The namespace name.
         :param callback callback: The reference on callback function.
@@ -156,10 +159,10 @@ class BiomioClient(BaseClient):
         """
         Try response. Send try required data to the server.
 
-        :param try_id: A string, a try request identifier.
-        :param try_type: A string, a try request type.
-        :param probe_status: A string, result of try request.
-        :param probe_data: A dictionary, a try required data.
+        :param str try_id: A try request identifier.
+        :param str try_type: A try request type.
+        :param str probe_status: A result of try request.
+        :param dict probe_data: A try required data.
         """
         self._messaging_api.probe_response(try_id, try_type, probe_status, probe_data)
 
