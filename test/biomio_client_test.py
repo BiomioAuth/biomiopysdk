@@ -9,7 +9,9 @@ import os
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 FACE_TRAINING_DATA_PATH = os.path.join(APP_ROOT, "data", "face_training")
 WEBSOCKET_HOST = "gate.biom.io"
-WEBSOCKET_PORT = "8080"
+# WEBSOCKET_HOST = "gate-dev.biom.io"
+# WEBSOCKET_PORT = "8080"
+WEBSOCKET_PORT = "443"
 
 
 class TestBiomioClient:

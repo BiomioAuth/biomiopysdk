@@ -9,36 +9,54 @@ import os
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 FACE_TRAINING_DATA_PATH = os.path.join(APP_ROOT, "data", "face_training")
-WEBSOCKET_HOST = "gate-dev.biom.io"
-WEBSOCKET_PORT = "8080"
-
+WEBSOCKET_HOST = "gate.biom.io"
+# WEBSOCKET_HOST = "gate-dev.biom.io"
+# WEBSOCKET_PORT = "8080"
+WEBSOCKET_PORT = "443"
 
 class OpenIdSim:
     def __init__(self):
         self._client = None
+        # self._private_key = """-----BEGIN RSA PRIVATE KEY-----
+        # MIICXgIBAAKBgQCoBl9L2XrEH+UJ1oDcSg/U7/h1YlKMsu+NdygI0J2wxRe5HWZE
+        # YU5VQDGXbpm1yhEe4AyKZwXnQnET/aqA/LxnQNe2VYjYCsY8BUN0zJwIBmv4k28E
+        # zlh9mV+5BXUSEBe7COcfezPen0llVYJdtMRYRNZP59vHBB2ZpuBaHdKaCQIDAQAB
+        # AoGBAKYudz4bgLJNIUhToOs/TN074i6m6iJCL29o9G2TdwMIS+hITYc//iuO6/1r
+        # 5BbKHZi922lfb5VEP3aYInSkgui5zCYfa0zDQD2GK2QZvOfuSGEdD/uDI3U+dgKg
+        # mzprWoQ1kFVLshxs7fb7/WXDwtKLL/aR1dAWaEHGxasjY1kBAkEAx8GxrYch1HcW
+        # Jo2UtzPxigbuowsnvJb1QIAINfoWLBa/NixGxuaAoKH+sXTfKCvSicJE56z/7377
+        # SELdOp0lWQJBANdVermVlseZpAYfgA70/gKPBEcR4IxkhRfUAPGc29+fw5bulvfn
+        # kFjV8ULilnR8UE89FFaSsWOPrko85A1/lDECQBtPX/tZfkaOAXlD4hEqCNvWFsoz
+        # vDsMaHtpBbZbeqyMb5f4dbS7ztonS6r3T4sucppi9Qi3nkYgFjrK6XQaCAECQQDS
+        # XAArQpZs4YwaKzW35uAqcbqVD0LVA/H9SC+v2TP27yVs0iILhl0+W6p4U9D1dOgj
+        # sKCovl+qypdSkM+c3DBRAkEAkmKKpdKfjRs7PFfFv81AwSTZFGxj1q/JfPwN3KIJ
+        # vVn65Ak0oZ2w54K8upQlnwC7kKWbL6JH1QYpXbvWHuju8Q==
+        # -----END RSA PRIVATE KEY-----"""
+        # self._app_type = 'extension'
+        # self._app_id = 'a8574879896db2f989c3a40155399531'
+        # self._os_id = 'linux'
+        # self._dev_id = 'node_js_lib'
+
+        # gate.biom.io
         self._private_key = """-----BEGIN RSA PRIVATE KEY-----
-        MIICXgIBAAKBgQCoBl9L2XrEH+UJ1oDcSg/U7/h1YlKMsu+NdygI0J2wxRe5HWZE
-        YU5VQDGXbpm1yhEe4AyKZwXnQnET/aqA/LxnQNe2VYjYCsY8BUN0zJwIBmv4k28E
-        zlh9mV+5BXUSEBe7COcfezPen0llVYJdtMRYRNZP59vHBB2ZpuBaHdKaCQIDAQAB
-        AoGBAKYudz4bgLJNIUhToOs/TN074i6m6iJCL29o9G2TdwMIS+hITYc//iuO6/1r
-        5BbKHZi922lfb5VEP3aYInSkgui5zCYfa0zDQD2GK2QZvOfuSGEdD/uDI3U+dgKg
-        mzprWoQ1kFVLshxs7fb7/WXDwtKLL/aR1dAWaEHGxasjY1kBAkEAx8GxrYch1HcW
-        Jo2UtzPxigbuowsnvJb1QIAINfoWLBa/NixGxuaAoKH+sXTfKCvSicJE56z/7377
-        SELdOp0lWQJBANdVermVlseZpAYfgA70/gKPBEcR4IxkhRfUAPGc29+fw5bulvfn
-        kFjV8ULilnR8UE89FFaSsWOPrko85A1/lDECQBtPX/tZfkaOAXlD4hEqCNvWFsoz
-        vDsMaHtpBbZbeqyMb5f4dbS7ztonS6r3T4sucppi9Qi3nkYgFjrK6XQaCAECQQDS
-        XAArQpZs4YwaKzW35uAqcbqVD0LVA/H9SC+v2TP27yVs0iILhl0+W6p4U9D1dOgj
-        sKCovl+qypdSkM+c3DBRAkEAkmKKpdKfjRs7PFfFv81AwSTZFGxj1q/JfPwN3KIJ
-        vVn65Ak0oZ2w54K8upQlnwC7kKWbL6JH1QYpXbvWHuju8Q==
+        MIICXgIBAAKBgQDwTvx29SKI9FMtlT+ju6p1WJLuqOJl/pW26NchbIgXx3YWMuyk
+        Y1tKHac69yThEcTIzR4auEwgMHF2thAiVVcJp7oNcmfjXi/xl6Ak3chDAENgdH/h
+        BDyN+04U2e5hoS/JzHDA3dICp0cMz05fbANwVZKqOs+BfL6d1TD+mtk2iwIDAQAB
+        AoGBAMP1hQZ0S18m7ZUkOasI462hNuALM+M8QVXQdW26FRhe/LqJeFNs+gpsN+xr
+        kNVAKhocucnMM7ekCUJmoK1+reOLIQp2uxYpgTHEdMxKIJ/dIIHt7yEtozH91MVv
+        Ty10aYchUp4CZROD+bNCIE8FsnOGBNcjsHkn4kIRSB3cxCZxAkEA89EdufU6iGuX
+        NTmP5I2yNLtYDivCsUDO1kT8cMF6TbyYGvCb2efZXP1FgMf6ldWPOt05MR+53hjB
+        VgOtbgQLzwJBAPxQ/fBj9XKBuWymLG++mCATzCB2cKLOYBKZWibWVKuCUHY3v4PM
+        oAaO1puLZiO55GXT2qGgFThK+LaoHTwwrIUCQQDLhMXMgM/AKhcIvajH/iM/8xXY
+        llyoutEseF9D+6yMkR1id2+QoACHp35JtiQMyDwLxbfEspfitUVE+ELfL49vAkB0
+        QQz/2c6Zd9Prj5Uh13tYLEb9HhU/rj7t0uKKym4wp9ZS4dTH8Vw6KU4QVOY2x8vI
+        bxhpJ80fJsv5vPPba8HRAkEAhsny1b8uThQMWOvTIAD26aU1N9GMd/ji3dcD/HKT
+        iBTrqODNC07WQxNXKmxLQe5Ixf/OUvFxK93Kh6ZIr7koZQ==
         -----END RSA PRIVATE KEY-----"""
         self._app_type = 'extension'
-        self._app_id = 'a8574879896db2f989c3a40155399531'
+        self._app_id = '3e0652a167d6799e45617e5e55fa8b08'
         self._os_id = 'linux'
         self._dev_id = 'node_js_lib'
-        # self._app_type = 'probe'
-        # self._app_id = '23baecb6e903c6cc98917247da020b11'
-        # self._os_id = 'Android_6.0.1'
-        # self._dev_id = 'c1d277535c7fbc2'
 
     def setup(self):
         self._client = TestClient(WEBSOCKET_HOST, WEBSOCKET_PORT, "", app_type=self._app_type,
