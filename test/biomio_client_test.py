@@ -8,30 +8,51 @@ import os
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 FACE_TRAINING_DATA_PATH = os.path.join(APP_ROOT, "data", "face_training")
-WEBSOCKET_HOST = "gate-dev.biom.io"
+WEBSOCKET_HOST = "gate.biom.io"
 WEBSOCKET_PORT = "8080"
 
 
 class TestBiomioClient:
     def __init__(self):
         self._client = None
+        # self._private_key = """-----BEGIN RSA PRIVATE KEY-----
+        # MIICXgIBAAKBgQCoBl9L2XrEH+UJ1oDcSg/U7/h1YlKMsu+NdygI0J2wxRe5HWZE
+        # YU5VQDGXbpm1yhEe4AyKZwXnQnET/aqA/LxnQNe2VYjYCsY8BUN0zJwIBmv4k28E
+        # zlh9mV+5BXUSEBe7COcfezPen0llVYJdtMRYRNZP59vHBB2ZpuBaHdKaCQIDAQAB
+        # AoGBAKYudz4bgLJNIUhToOs/TN074i6m6iJCL29o9G2TdwMIS+hITYc//iuO6/1r
+        # 5BbKHZi922lfb5VEP3aYInSkgui5zCYfa0zDQD2GK2QZvOfuSGEdD/uDI3U+dgKg
+        # mzprWoQ1kFVLshxs7fb7/WXDwtKLL/aR1dAWaEHGxasjY1kBAkEAx8GxrYch1HcW
+        # Jo2UtzPxigbuowsnvJb1QIAINfoWLBa/NixGxuaAoKH+sXTfKCvSicJE56z/7377
+        # SELdOp0lWQJBANdVermVlseZpAYfgA70/gKPBEcR4IxkhRfUAPGc29+fw5bulvfn
+        # kFjV8ULilnR8UE89FFaSsWOPrko85A1/lDECQBtPX/tZfkaOAXlD4hEqCNvWFsoz
+        # vDsMaHtpBbZbeqyMb5f4dbS7ztonS6r3T4sucppi9Qi3nkYgFjrK6XQaCAECQQDS
+        # XAArQpZs4YwaKzW35uAqcbqVD0LVA/H9SC+v2TP27yVs0iILhl0+W6p4U9D1dOgj
+        # sKCovl+qypdSkM+c3DBRAkEAkmKKpdKfjRs7PFfFv81AwSTZFGxj1q/JfPwN3KIJ
+        # vVn65Ak0oZ2w54K8upQlnwC7kKWbL6JH1QYpXbvWHuju8Q==
+        # -----END RSA PRIVATE KEY-----"""
+        # self._app_type = 'probe'
+        # self._app_id = '23baecb6e903c6cc98917247da020b11'
+        # self._os_id = 'Android_6.0.1'
+        # self._dev_id = 'c1d277535c7fbc2'
+
+        # gate.biom.io
         self._private_key = """-----BEGIN RSA PRIVATE KEY-----
-        MIICXgIBAAKBgQCoBl9L2XrEH+UJ1oDcSg/U7/h1YlKMsu+NdygI0J2wxRe5HWZE
-        YU5VQDGXbpm1yhEe4AyKZwXnQnET/aqA/LxnQNe2VYjYCsY8BUN0zJwIBmv4k28E
-        zlh9mV+5BXUSEBe7COcfezPen0llVYJdtMRYRNZP59vHBB2ZpuBaHdKaCQIDAQAB
-        AoGBAKYudz4bgLJNIUhToOs/TN074i6m6iJCL29o9G2TdwMIS+hITYc//iuO6/1r
-        5BbKHZi922lfb5VEP3aYInSkgui5zCYfa0zDQD2GK2QZvOfuSGEdD/uDI3U+dgKg
-        mzprWoQ1kFVLshxs7fb7/WXDwtKLL/aR1dAWaEHGxasjY1kBAkEAx8GxrYch1HcW
-        Jo2UtzPxigbuowsnvJb1QIAINfoWLBa/NixGxuaAoKH+sXTfKCvSicJE56z/7377
-        SELdOp0lWQJBANdVermVlseZpAYfgA70/gKPBEcR4IxkhRfUAPGc29+fw5bulvfn
-        kFjV8ULilnR8UE89FFaSsWOPrko85A1/lDECQBtPX/tZfkaOAXlD4hEqCNvWFsoz
-        vDsMaHtpBbZbeqyMb5f4dbS7ztonS6r3T4sucppi9Qi3nkYgFjrK6XQaCAECQQDS
-        XAArQpZs4YwaKzW35uAqcbqVD0LVA/H9SC+v2TP27yVs0iILhl0+W6p4U9D1dOgj
-        sKCovl+qypdSkM+c3DBRAkEAkmKKpdKfjRs7PFfFv81AwSTZFGxj1q/JfPwN3KIJ
-        vVn65Ak0oZ2w54K8upQlnwC7kKWbL6JH1QYpXbvWHuju8Q==
+        MIICXwIBAAKBgQC/EjU3My0FFB88w/hx8dWvbb++Oo8AG7SKU+b0VdEkFEK5J8Lb
+        HxPm9ifaYuCujT6UHQOdFioJgOtc9GQFn6YrXOh71Ff0pkLHGvGHiedHsxa77usN
+        ovFzqqAAOyJtvT8zkfGO/8mgNilWw+zB65IDk2hEMFpvU4jG1T+nPxgh1QIDAQAB
+        AoGBALbPxPq7jCd/ySNqnRroN3tRllN707ZWy7ZN8Ht2YFQUzoI4+MaORYyFmDvq
+        vu5DVcyAtiRmQHI3VvnpGooG5gSPfGHWLK2XI5urX9ah/56s9cXwBXDa7sztmzsV
+        B+Xvu3KkH1hDbrp65QwCb/Ge3BR0/jPkXsCAwbQOtfZ7NENBAkEA0tLYZLSIksKX
+        lit8f6JuRvDVqsi3O0c7SakBsqD8UxXXbmDnn0W95hdkPXFzMq0M8nt9H2p9BELn
+        Dw25LzPzwwJBAOgDzMZkobDLCLiXyVFhQxA4gTAqCsJ3CldDhGDoaYt4dMRybJM+
+        D//bDEwZgLL1m28B5+m7mmMfP6qWgX2nsocCQQCQeCgNqqFEYNDb+WTRWg/T0Um6
+        RN07Y+6+5W/iZutCTF9aplFTFcmyGSl56XqVqXyL1g/CLYkKGIaaDD9wl1tdAkEA
+        3SvSJ0WCxU+m7qDzLnqzPWE/9bP+McbcurcIGIE1K9kWJraVPf+prNMZc+nTv8VV
+        +Iouk6dc0yTUwj9bDXexPQJBAKzcvcepjZj5CIhamBUwavO3EZkyo9GvrOaEhRZp
+        b2sYVZiiHhzxW4S5Y+/1x5PCgyTsinDoC0+0GO3iyY/0h+o=
         -----END RSA PRIVATE KEY-----"""
         self._app_type = 'probe'
-        self._app_id = '23baecb6e903c6cc98917247da020b11'
+        self._app_id = '904e537ea6bc65a2227ac65585bf5865'
         self._os_id = 'Android_6.0.1'
         self._dev_id = 'c1d277535c7fbc2'
 
