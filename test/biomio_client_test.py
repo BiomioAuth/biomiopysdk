@@ -1,7 +1,8 @@
-from ..biomio_client import BiomioClient, TRY_REQUEST, RESOURCE_REQUEST, DISCONNECT
+from .. import BiomioClient, TRY_REQUEST, RESOURCE_REQUEST, DISCONNECT
 from binascii import b2a_base64
 from nose.tools import nottest
 from utils import get_files
+import threading
 import time
 import os
 
@@ -35,58 +36,50 @@ class TestBiomioClient:
         self._dev_id = 'c1d277535c7fbc2'
 
     def setup(self):
-        print "!!!!"
-        pass
-
-    def teardown(self):
-        print "????"
-        pass
-
-    @nottest
-    def active_test(self):
         self._client = BiomioClient(WEBSOCKET_HOST, WEBSOCKET_PORT, self._private_key, app_type=self._app_type,
-                                    app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id,
-                                    auto_receiving=False, timeout=5)
-        self._client.connect()
-        time.sleep(100)
-        self._client.disconnect()
-        time.sleep(5)
-        self._client.restore()
-        time.sleep(100)
-
-        session_id = ""
-        on_behalf_of = ""
-        namespace = ""
-        call_pr = ""
-        data = ""
-        # self._client.request(session_id, on_behalf_of, namespace, call_pr, data, callback=self._request_callback)
-
-        # self._client.enum_ns_request(callback=self._enum_ns_callback)
-
-        ns = ""
-        # self._client.enum_calls_request(ns=ns, callback=self._enum_calls_callback)
-        self._client.disconnect()
-        time.sleep(5)
-        return False
-
-    def passive_test(self):
-        self._client = BiomioClient(WEBSOCKET_HOST, WEBSOCKET_PORT, self._private_key, app_type=self._app_type,
-                                    app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id,
-                                    auto_receiving=True, timeout=5)
+                                    app_id=self._app_id, os_id=self._os_id, dev_id=self._dev_id)
         self._client.register(DISCONNECT, self._disconnect_callback)
         self._client.register(TRY_REQUEST, self._try_callback)
         self._client.register(RESOURCE_REQUEST, self._resource_callback)
-        self._client.connect()
-        print "passive sleep"
-        time.sleep(50)
-        print "passive wake up"
-        self._client.disconnect(self._disconnect_callback)
+        print "!!SETUP!!"
+
+    def teardown(self):
+        self._client.disconnect()
         time.sleep(10)
-        return False
+        print "||TEARDOWN||"
+
+    def active_test(self):
+        t = threading.Thread(target=self._client.run)
+        t.start()
+
+        session_id = ""
+        on_behalf_of = "biomio.vk.test@gmail.com"
+        namespace = "auth_client_plugin"
+        call_pr = "process_auth"
+        data = {
+            "keys": ["email", "auth_code"],
+            "values": ["biomio.vk.test@gmail.com", "NO_REST"]
+        }
+
+        time.sleep(5)
+        # self._client.request(session_id, on_behalf_of, namespace, call_pr, data, callback=self._request_callback)
+        i = 0
+        while True:
+            time.sleep(2)
+            i += 1
+            if i == 20:
+                break
+        print "wake up"
+
+    def passive_test(self):
+        self._client.run()
+        # print "passive sleep"
+        # time.sleep(20)
+        print "passive wake up"
 
     @nottest
     def _request_callback(self, request):
-        print request
+        print "REQ CALLBACK", dict(request)
 
     @nottest
     def _enum_ns_callback(self, request):
@@ -97,9 +90,12 @@ class TestBiomioClient:
         print request
 
     @nottest
+    def _restore_callback(self, request):
+        print "restore", request
+
+    @nottest
     def _disconnect_callback(self, request):
-        # self._client.restore()
-        print "CALLBACK", request
+        print "DISCONNECT CALLBACK", request
 
     @nottest
     def _try_callback(self, request):
@@ -126,6 +122,9 @@ class TestBiomioClient:
                         "oid": "locationSamples",
                         "samples": ["49.811055,24.079584,65.000000"]
                     }
+                    if len(tries_list) > 1:
+                        continue
+                else:
                     if len(tries_list) > 1:
                         continue
                 curr_message = message.copy()

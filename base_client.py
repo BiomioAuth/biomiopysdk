@@ -8,6 +8,10 @@ REQUEST_TYPE_LIST = [CONNECT, DISCONNECT, RESOURCE_REQUEST, TRY_REQUEST, CLIENT_
 
 
 class BaseClient(object):
+    """
+    Base class for BiomioClient which provides backend methods for communication and
+    callback mechanism support.
+    """
     def __init__(self):
         self._is_connected = False
         self._registered_callbacks = {}
@@ -16,19 +20,31 @@ class BaseClient(object):
             'bye': self._receive_bye,
             'try': self._receive_try,
             'getResources': self._receive_resource,
-            'again': self._receive_repeat
+            'again': self._receive_repeat,
+            'serverHello': self._receive_hello
         }
+        self._additional_messages = {}
         self._temp_callback = None
+
+    def _handle_request(self, request):
+        if request:
+            receiver = self._received_messages.get(request.msg.oid, None)
+            if receiver is not None:
+                request_type, data = receiver(request)
+                self._call_callback(request_type, **data)
+            else:
+                self._additional_callback(request)
 
     def _call_callback(self, request_type, **kwargs):
         callback = self._registered_callbacks.get(request_type, None)
-        print callback, request_type, kwargs
         if callback is not None:
             callback(kwargs)
 
     def _receive_bye(self, request):
         self._is_connected = request.msg.oid != "bye"
-        res = {'connected': self._is_connected}
+        res = {'connected': self._is_connected, 'status': request.status}
+        if not self._is_connected:
+            self._messaging_api.clear_session_token()
         if self._temp_callback is not None:
             self._temp_callback(res)
             self._temp_callback = None
@@ -42,9 +58,18 @@ class BaseClient(object):
         req = {'callback': self._resource_callback}
         return RESOURCE_REQUEST, req
 
+    def _receive_hello(self, request):
+        return CONNECT, {}
+
     def _receive_repeat(self, request):
         self._messaging_api.repeat()
         return None, {}
+
+    def _additional_callback(self, request):
+        if request:
+            callback = self._additional_messages.get(request.msg.oid, None)
+            if callback is not None:
+                callback(request)
 
     def _try_callback(self, **kwargs):
         self._messaging_api.probe_response(**kwargs)

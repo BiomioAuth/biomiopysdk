@@ -1,13 +1,24 @@
 from websocket import WebSocket
-from settings import DEFAULT_SOCKET_TIMEOUT, SSL_OPTIONS
 from crypt import Crypto
+import select
 import sys
 
 
 WEBSOCKET_URL = "wss://{host}:{port}/websocket"
+DEFAULT_SOCKET_TIMEOUT = 5  # seconds
+SSL_OPTIONS = {
+    "ca_certs": "/home/user/projects/prototype-protocol/prod_certs/GandiStandardSSLCA2.pem"
+}
 
 
 class BaseMessagingAPI(object):
+    """
+    Base class for BiomioMessagingAPI which provides backend methods for sending and receiving messages and
+    handle websoket state.
+
+    :param str host: Biomio back-end address.
+    :param str port: Biomio back-end port number.
+    """
     def __init__(self, host, port):
         self._websocket_url = WEBSOCKET_URL.format(host=host, port=port)
         self._last_read_message = None
@@ -19,16 +30,26 @@ class BaseMessagingAPI(object):
         self._builder = None
         self._ws = None
 
-    def receive(self):
-        request = self._read_message(self._ws)
-        if request:
-            return request
+    def select(self, timeout=0):
+        """
+        Return received message.
+
+        Wait for message in ``timeout`` time and return received message. If there isn't a message, returns ``None``.
+
+        :param int timeout: The timeout for message receiving.
+        :return: The received message.
+        :rtype: message object or None
+        """
+        r, w, e = select.select((self._ws.sock, ), (), (), timeout)
+        if r:
+            op_code, frame = self._ws.recv_data_frame(True)
+            response = self._create_message_from_json(frame.data)
+            self._last_read_message = response
+            return response
         return None
 
     def _get_digest_for_next_message(self, private_key):
-        """
-        Creates digest for next message.
-        """
+        """Create digest for next message."""
         header_str = self._builder.header_string()
         return Crypto.create_digest(data=header_str, key=private_key)
 
@@ -37,9 +58,10 @@ class BaseMessagingAPI(object):
 
     def _new_connection(self, socket_timeout=DEFAULT_SOCKET_TIMEOUT):
         """
-        Creates connection and returns socket that could be used for further
+        Create connection and returns socket that could be used for further
         communication with server.
-        :param: socket_timeout Timeout for socket operations.
+
+        :param int socket_timeout: Timeout for socket operations.
         :return: WebSocket connected to server.
         """
         socket = WebSocket()#sslopt=SSL_OPTIONS)
@@ -50,9 +72,9 @@ class BaseMessagingAPI(object):
     def _get_curr_connection(self):
         """
         Helper method to get current connected websocket object.
-        Could be used to get current websocket after some setup methods
-        (e.g. setup_test_with_handshake) that creates connection with server
-        and send messages to prepare test case.
+
+        Could be used to get current websocket after some setup methods that creates
+        connection with server and send messages to prepare test case.
         """
         if not self._ws or not self._ws.connected:
             self._ws = self._new_connection()
@@ -63,14 +85,12 @@ class BaseMessagingAPI(object):
         Reads message from given websocket and memorizes session and refresh tokens
         as well as the last received message. Memorized tokens will be used in further
         communication with server.
-        :param: Websocket connected to server to listen.
-        :return: BIOMIO message responce object.
+
+        :param websocket: websocket object connected to server to listen.
+        :return: BIOMIO message response object.
         """
         try:
-            response_str = websocket.recv()
-            response = self._create_message_from_json(response_str)
-            self._last_read_message = response
-            return response
+            return self.select(5)
         except:
             print sys.exc_info()[0]
             return None
@@ -79,11 +99,13 @@ class BaseMessagingAPI(object):
         """
         Sends given message to server using given connected to server websocket. This method also could be used
         to listen to server responce.
-        :param: message BIOMIO message object.
-        :param: websocket Connected to server WebSocket object. If not specified - new connection will be established.
-        :param: wait_for_response If True method will wait for responce and return BIOMIO message response object.
-        :param: close_connection Closes connection after method execution if True; leaves connection open otherwise.
-        :return: WebSocket connected to server.
+
+        :param message: BIOMIO message object.
+        :param websocket: Connected to server WebSocket object. If not specified - new connection will be established.
+        :param bool wait_for_response: If True method will wait for responce and return BIOMIO message response object.
+        :param bool close_connection: Close connection after method execution if True; otherwise leave connection
+        opened.
+        :return: WebSocket object connected to server.
         """
         if websocket is None:
             websocket = self._new_connection()
@@ -110,7 +132,13 @@ class BaseMessagingAPI(object):
         Sets session token for BiomioTest object. Token will be used in further
         communication with server. Method raises exception if appropriate setup method
         was not called before.
-        :param token: Session token.
+
+        :param str token: Session token.
         """
         self._builder.set_header(token=token)
         self._session_token = token
+
+    def clear_session_token(self):
+        """Clear session data."""
+        self._builder.delete_header_key('token')
+        self._session_token = None
