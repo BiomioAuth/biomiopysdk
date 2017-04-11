@@ -1,1 +1,8 @@
 BiomioPySDK - Biomio Python SDK
+
+
+
+Sphinx Documentation Commands:
+```
+sphinx-apidoc -F -a -H "BiomioPySDK" -A "BIOMIO, Inc" -V "0.1" -R "0 alpha" -o docs2/ biomiopysdk/
+```
