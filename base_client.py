@@ -20,7 +20,8 @@ class BaseClient(object):
             'bye': self._receive_bye,
             'try': self._receive_try,
             'getResources': self._receive_resource,
-            'again': self._receive_repeat
+            'again': self._receive_repeat,
+            'serverHello': self._receive_hello
         }
         self._additional_messages = {}
         self._temp_callback = None
@@ -56,6 +57,9 @@ class BaseClient(object):
     def _receive_resource(self, request):
         req = {'callback': self._resource_callback}
         return RESOURCE_REQUEST, req
+
+    def _receive_hello(self, request):
+        return CONNECT, {}
 
     def _receive_repeat(self, request):
         self._messaging_api.repeat()

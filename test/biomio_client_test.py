@@ -62,7 +62,7 @@ class TestBiomioClient:
         }
 
         time.sleep(5)
-        self._client.request(session_id, on_behalf_of, namespace, call_pr, data, callback=self._request_callback)
+        # self._client.request(session_id, on_behalf_of, namespace, call_pr, data, callback=self._request_callback)
         i = 0
         while True:
             time.sleep(2)

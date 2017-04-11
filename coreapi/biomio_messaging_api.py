@@ -105,7 +105,7 @@ class BiomioMessagingAPI(BaseMessagingAPI):
 
         :param str try_id: A try request identifier.
         :param int auth_timeout:
-        :param policy:
+        :param dict policy:
         :param try_info:
         :param resource:
         :param message:
@@ -224,6 +224,7 @@ class BiomioMessagingAPI(BaseMessagingAPI):
         :rtype: boolean
         """
         response = self.hello(**kwargs)
+        print dict(response)
         if response and response.msg.oid == 'serverHello':
             self.auth(key=self._get_digest_for_next_message(private_key=private_key))
             return True

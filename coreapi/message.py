@@ -21,7 +21,8 @@ class BiomioMessageBuilder:
         return self._header.get(field_str, None)
 
     def delete_header_key(self, key):
-        del self._header[key]
+        if self._header.__contains__(key):
+            del self._header[key]
 
     @classmethod
     def _get_ns(cls):
